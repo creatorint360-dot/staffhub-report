@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StaffHub: Secure Login System Report</title>
+<meta name="description" content="Design and implementation of a secure login system: authentication, 2FA, RBAC, salt and pepper, encryption and backups.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--coral:#ff7a59;--violet:#7c5cfc;--ink:#2a2342;--muted:#6f6989;--cream:#fff8f1;--card:#fff;--line:#eee6f7;--r:18px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);background:var(--cream);line-height:1.65}
+a{color:var(--violet)}
+.hero{background:linear-gradient(145deg,var(--coral) 0%,#ff5f8d 45%,var(--violet) 100%);color:#fff;padding:64px 24px 72px;position:relative;overflow:hidden}
+.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.13)}
+.hero::before{width:420px;height:420px;top:-140px;right:-120px}
+.hero::after{width:280px;height:280px;bottom:-110px;left:-80px}
+.wrap{max-width:920px;margin:0 auto;position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;margin-bottom:36px}
+.mark{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--violet);display:grid;place-items:center;font-weight:800}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.15;font-weight:800;margin-bottom:14px}
+.hero p.lead{max-width:640px;opacity:.95;font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.chip{background:rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600}
+nav{position:sticky;top:0;z-index:5;background:rgba(255,248,241,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 24px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px}
+nav a:hover{background:#f1ecff;color:var(--violet)}
+main{padding:40px 24px 80px}
+section{margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:30px;box-shadow:0 6px 20px rgba(42,35,66,.04)}
+h2{font-size:24px;font-weight:800;margin-bottom:14px}
+h2 span{background:linear-gradient(135deg,var(--coral),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;margin-right:8px}
+p{margin-bottom:14px}
+p:last-child{margin-bottom:0}
+ul{margin:0 0 14px 22px}
+li{margin-bottom:6px}
+.tablewrap{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:2px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.yes{color:#1b6b3a;font-weight:700}
+.no{color:#b3261e;font-weight:700}
+.tip{background:#f1ecff;border-left:4px solid var(--violet);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0;font-size:15px}
+pre{background:#2a2342;color:#f4efff;padding:18px;border-radius:14px;overflow-x:auto;font-size:13px;line-height:1.6;margin:14px 0}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:#f1ecff;color:#4b32b3;padding:2px 6px;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0}
+.mini{background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:16px}
+.mini b{display:block;margin-bottom:4px}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 24px 40px}
+@media(max-width:640px){.card{padding:22px}.hero{padding:44px 20px 56px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand"><div class="mark">S</div> StaffHub</div>
+    <h1>Design and Implementation of a Secure Login System</h1>
+    <p class="lead">A staff-records system with identification, two-factor authentication, role-based authorization, salted and peppered password storage, encryption and automatic backups.</p>
+    <div class="meta">
+      <span class="chip">Computer Security · PBIT 309 / PBSE 309</span>
+      <span class="chip">Samuel Dzenenya</span>
+      <span class="chip">19 October 2026</span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <a href="#intro">Introduction</a><a href="#architecture">Architecture</a><a href="#auth">Authentication</a>
+  <a href="#passwords">Passwords</a><a href="#roles">Roles</a><a href="#database">Database security</a>
+  <a href="#crypto">Cryptography &amp; CIA</a><a href="#backups">Backups</a><a href="#balance">Balance</a><a href="#evidence">Evidence</a>
+</div></nav>
+
+<main><div class="wrap">
+
+<section id="intro" class="card">
+  <h2><span>1</span>Introduction</h2>
+  <p>StaffHub is a staff-records web system with a secure login. Its purpose is to make sure only genuine users get in, and that each user can do only what their job allows.</p>
+  <p>It provides user identification, two-factor authentication, role-based authorization, safe password storage with salt and pepper, a secure database connection, a local server, and a balance between security and ease of access. It also applies cryptographic techniques and automatic backups to protect confidentiality, integrity and availability.</p>
+</section>
+
+<section id="architecture" class="card">
+  <h2><span>2</span>System architecture</h2>
+  <p>Think of a restaurant: the front end is the dining room the customer sees, the back end is the kitchen where the work happens, and the database is the store room.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Component</th><th>Technology</th><th>Purpose</th></tr>
+    <tr><td>Front end</td><td>HTML, CSS, JavaScript (custom responsive design)</td><td>Pages the user sees and uses</td></tr>
+    <tr><td>Back end</td><td>PHP</td><td>Applies the security rules</td></tr>
+    <tr><td>Database</td><td>MySQL, managed with phpMyAdmin</td><td>Stores users, roles, records and the audit log</td></tr>
+    <tr><td>Local server</td><td>Apache in XAMPP, on localhost</td><td>Runs the system on our own machine, away from the internet</td></tr>
+    <tr><td>Cloud storage</td><td>Supabase Storage (private bucket)</td><td>Off-site copy of encrypted backups</td></tr>
+  </table></div>
+  <div class="tip">This page is the project report. The system itself runs locally on XAMPP (<code>http://localhost/staffhub</code>), which is why it is demonstrated through the evidence section below.</div>
+</section>
+
+<section id="auth" class="card">
+  <h2><span>3</span>Identification and authentication</h2>
+  <p><b>Identification</b> means claiming who you are. Every user has a unique username, so each action can be traced to one person. <b>Authentication</b> means proving the claim. It is like giving your name at an airport (identification) and then showing your passport (authentication).</p>
+  <p><b>Two-factor authentication (2FA)</b> asks for two different kinds of proof: something the user <i>knows</i> (the password) and something the user <i>has</i> (a phone with an authenticator app). An ATM works the same way: it needs the card and the PIN, so a thief with only one gets nothing.</p>
+  <p>StaffHub uses a time-based one-time password (TOTP). The phone and the server share a secret key. Every 30 seconds both combine the key with the current time and produce the same 6-digit code. A stolen code is useless a minute later.</p>
+  <ul>
+    <li>After the password step the user is only "half logged in"; the dashboard stays closed until the correct code is entered.</li>
+    <li>Five wrong attempts lock the account for 15 minutes, which stops brute-force guessing.</li>
+    <li>The login message is always "Incorrect username or password", so attackers cannot discover which usernames exist.</li>
+    <li>If a user loses their phone, the Administrator can reset their 2FA and the action is logged.</li>
+  </ul>
+</section>
+
+<section id="passwords" class="card">
+  <h2><span>4</span>Password storage: hashing, salt and pepper</h2>
+  <p>Passwords are never stored as plain text, because anyone who stole the database could read them all. Instead the system stores a <b>hash</b>, a one-way scramble that cannot be turned back into the password. Hashing is like turning a cow into a burger: it only goes one way. At login the typed password is hashed again and compared with the stored hash.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Technique</th><th>What it is</th><th>Where it is kept</th><th>What it prevents</th></tr>
+    <tr><td><b>Salt</b></td><td>A random value added to each password before hashing</td><td>In the database, inside the hash</td><td>Identical passwords giving identical hashes; rainbow-table attacks</td></tr>
+    <tr><td><b>Pepper</b></td><td>A secret value added to every password</td><td>In a protected config file, outside the database</td><td>An attacker with only the stolen database guessing passwords</td></tr>
+  </table></div>
+  <p>Every password goes through the same six steps, written out one by one in the code (<code>includes/security.php</code>):</p>
+  <div class="tablewrap"><table>
+    <tr><th>Step</th><th>What happens</th><th>Function</th></tr>
+    <tr><td>1</td><td><b>Salt</b>: 16 random bytes (32 hex characters), different for every user</td><td><code>generate_salt()</code></td></tr>
+    <tr><td>2</td><td><b>Pepper</b>: one secret value read from the config file</td><td><code>get_pepper()</code></td></tr>
+    <tr><td>3</td><td><b>Combine</b> by concatenation: <code>salt + password + pepper</code></td><td><code>combine_salt_password_pepper()</code></td></tr>
+    <tr><td>4</td><td><b>Pre-hash</b> the combined text with SHA-256 (always 64 characters)</td><td><code>prehash()</code></td></tr>
+    <tr><td>5</td><td><b>Hash</b> the result with bcrypt, cost factor 12 (deliberately slow)</td><td><code>hash_password()</code></td></tr>
+    <tr><td>6</td><td><b>Store</b> as <code>v2$salt$bcrypt-hash</code></td><td><code>hash_password()</code></td></tr>
+  </table></div>
+  <p>bcrypt is deliberately slow: unnoticeable for one login, but very expensive for an attacker trying millions of guesses. At login the system reads the saved salt, repeats steps 3 to 5 with the typed password, and compares the result. A password policy requires at least 10 characters with upper case, lower case, a number and a symbol.</p>
+  <p><b>Salt and pepper in the database.</b> So that every step can be inspected, the <code>users</code> table has a column for each part:</p>
+  <div class="tablewrap"><table>
+    <tr><th>Column</th><th>Holds</th><th>Same for all users?</th></tr>
+    <tr><td><code>salt</code></td><td>The user's random salt</td><td>No, unique per user</td></tr>
+    <tr><td><code>pepper</code></td><td>The pepper value (shown for demonstration)</td><td>Yes</td></tr>
+    <tr><td><code>salt_pepper</code></td><td>The concatenation of salt and pepper</td><td>No, because the salt differs</td></tr>
+    <tr><td><code>password_hash</code></td><td>The final stored result, <code>v2$salt$bcrypt-hash</code></td><td>No</td></tr>
+    <tr><td><code>hash_method</code></td><td>The recipe in words</td><td>Yes</td></tr>
+  </table></div>
+  <div class="tip">The password itself is never stored. The concatenation column holds only salt and pepper; the full recipe is salt + <b>password</b> + pepper. In a real deployment the pepper would stay only in the config file, outside the database. A copy is shown in the table for demonstration, and a configuration switch turns that off.</div>
+</section>
+
+<section id="roles" class="card">
+  <h2><span>5</span>Authorization based on roles</h2>
+  <p><b>Authorization</b> decides what a logged-in user may do. StaffHub uses role-based access control (RBAC): permissions belong to roles, and people are given roles. In a hospital, a nurse's badge opens the ward but not the pharmacy store; the badge decides, not the person.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Action</th><th>Inputter</th><th>Manager</th><th>Admin</th><th>Administrator</th></tr>
+    <tr><td>Add and delete own records</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>View all records</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Delete any record</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Add an Inputter</td><td class="no">No</td><td class="yes">Yes</td><td class="no">No</td><td class="yes">Yes</td></tr>
+    <tr><td>Add a Manager or Admin</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+    <tr><td>Delete an Inputter</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Unlock accounts, reset 2FA</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+    <tr><td>View and clear the audit log</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td></tr>
+    <tr><td>Change own password</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+  </table></div>
+  <p><b>Least privilege</b> means each role gets only the access it needs. <b>Separation of duties</b> means no ordinary role controls a whole process: a Manager can add Inputters but not delete them, and an Admin can delete them but not add them. Rules are checked on the server for every page, so typing a restricted address as an Inputter returns "403 Forbidden" and the attempt is logged.</p>
+</section>
+
+<section id="database" class="card">
+  <h2><span>6</span>Secure database connection and attack protection</h2>
+  <p>The application connects through PDO using a limited MySQL account (<code>staffhub_app</code>) instead of the all-powerful <code>root</code>, and only from <code>localhost</code>. It cannot delete tables or touch other databases. The database password lives in a configuration file that the web server refuses to show. Errors are logged privately and the visitor sees only a generic message.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Attack</th><th>Simple example</th><th>Defence</th></tr>
+    <tr><td>SQL injection</td><td>Typing a database command into the username box</td><td>Prepared statements keep commands and data separate</td></tr>
+    <tr><td>Cross-site scripting (XSS)</td><td>A script saved inside a record</td><td>All output is escaped, so scripts show as plain text</td></tr>
+    <tr><td>Cross-site request forgery (CSRF)</td><td>An evil site secretly submits a delete form using your login</td><td>Secret token in every form; SameSite cookies</td></tr>
+    <tr><td>Brute force</td><td>Trying many passwords</td><td>Account lockout and slow bcrypt hashing</td></tr>
+    <tr><td>Session hijacking</td><td>Stealing the login cookie</td><td>HttpOnly cookie, 15-minute inactivity timeout, new session ID after login</td></tr>
+  </table></div>
+  <p>The audit log records logins, failures, lockouts, denied access, deletions and backups, each with username, time and IP address.</p>
+</section>
+
+<section id="crypto" class="card">
+  <h2><span>7</span>Cryptographic techniques and the CIA triad</h2>
+  <div class="grid">
+    <div class="mini"><b>Confidentiality</b>Only authorised people can read data: hashed passwords, encrypted records and 2FA secrets, roles, encrypted backups.</div>
+    <div class="mini"><b>Integrity</b>Data cannot be changed secretly: authenticated encryption, prepared statements, CSRF tokens, audit log.</div>
+    <div class="mini"><b>Availability</b>Data is there when needed: automatic encrypted backups, off-site copy, tested restore, account recovery.</div>
+  </div>
+  <p><b>Encryption.</b> Record details and each user's 2FA secret are encrypted with <b>AES-256-GCM</b> before they are saved. Encryption scrambles readable text into unreadable text using a key, and unlike hashing it can be reversed with that key. The key is kept in the config file, not the database, so a stolen database shows only unreadable text. GCM adds an authentication tag, so if anyone alters the stored data, decryption fails instead of returning false information. A fresh random value is used each time, so the same text never encrypts to the same result.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Technique</th><th>Used for</th><th>Reversible?</th></tr>
+    <tr><td>bcrypt with salt</td><td>Storing passwords</td><td>No</td></tr>
+    <tr><td>HMAC-SHA256</td><td>Mixing the pepper into passwords</td><td>No</td></tr>
+    <tr><td>HMAC-SHA1 (TOTP)</td><td>Producing the 6-digit 2FA code</td><td>No</td></tr>
+    <tr><td>AES-256-GCM</td><td>Encrypting records, 2FA secrets and backups</td><td>Yes, with the key</td></tr>
+    <tr><td>HTTPS / TLS</td><td>Protecting the backup upload in transit</td><td>Between the two ends</td></tr>
+  </table></div>
+</section>
+
+<section id="backups" class="card">
+  <h2><span>8</span>Automatic backups (availability)</h2>
+  <p>Data can be lost through accidental deletion, a broken disk, ransomware or theft. Backups let the system recover.</p>
+  <ol style="margin:0 0 14px 22px">
+    <li>A scheduled task runs <code>backup.php</code> every night at 2:00 AM (Windows Task Scheduler).</li>
+    <li>It exports the database using a separate <b>read-only</b> MySQL account.</li>
+    <li>The dump is encrypted with AES-256-GCM and the readable copy is deleted.</li>
+    <li>The encrypted file is saved in a protected local folder.</li>
+    <li>The same encrypted file is uploaded to a <b>private Supabase Storage bucket</b> over HTTPS, so Supabase only ever holds unreadable data.</li>
+    <li>Backups older than 14 days are deleted, and every result is written to the audit log.</li>
+    <li>A restore script decrypts a backup so it can be imported, which proves the backup works.</li>
+  </ol>
+  <p>This follows the <b>3-2-1 rule</b>: three copies (live database, local encrypted backup, cloud encrypted backup), on two kinds of storage, with one off-site.</p>
+</section>
+
+<section id="balance" class="card">
+  <h2><span>9</span>Balancing security and access, and conclusion</h2>
+  <p>A system locked so tightly that nobody can use it is as useless as one left open, and too much difficulty pushes people into risky habits such as writing passwords on paper. StaffHub keeps the strong checks at login and lets the system work quietly in the background.</p>
+  <ul>
+    <li>The 2FA code is asked only at login, not on every click.</li>
+    <li>A lockout lasts only 15 minutes and clears by itself; the Administrator can unlock sooner.</li>
+    <li>The session ends after 15 minutes of inactivity, so active users are not interrupted.</li>
+    <li>Each role has what it needs for its job and nothing more.</li>
+    <li>A user who loses a phone can be recovered by the Administrator, and the action is logged.</li>
+    <li>Backups run automatically, so nobody has to remember them.</li>
+  </ul>
+  <p><b>Conclusion.</b> StaffHub meets the requirements by combining several layers of protection, called defence in depth: identification, two-factor authentication, role-based authorization, salted and peppered hashing, encryption, a secure database connection, audit logging and automatic encrypted backups. If one layer fails, the others still protect the data. A real deployment should also use HTTPS and a dedicated secrets vault for its keys.</p>
+</section>
+
+<section id="evidence" class="card">
+  <h2><span>10</span>Evidence from testing</h2>
+  <p><b>Salt and pepper walk-through.</b> The demo script runs the six steps twice for the same demo password. The salt changes, so the final hash changes. The pepper is a secret, so it is hidden here:</p>
+<pre>RUN 1
+Password typed   : MyStrongPass#2026
+STEP 1  Salt     : 151adba259e877ba4f30a94ae4f3c4c1
+STEP 2  Pepper   : [secret value from config.php, not shown]
+STEP 3  Combined : 151adba259e877ba4f30a94ae4f3c4c1MyStrongPass#2026[pepper]
+STEP 4  SHA-256  : 89223bfc312aa42719ebb3007afa3f10f2d104dc8b2ddfedec3b222ed0405987
+STEP 5  bcrypt   : $2y$12$vAtCvTPx1LuHFfKX8Pt5XuYHbDYSa9ZcEyXBP6UO87GjN8o4OuCYe
+STEP 6  Stored   : v2$151adba259e877ba4f30a94ae4f3c4c1$$2y$12$vAtCvTPx1LuHFfKX8Pt5XuYHbDYSa9ZcEyXBP6UO87GjN8o4OuCYe
+
+RUN 2 (same password, new salt)
+STEP 1  Salt     : 2cfaa4591dc5b87799bb543b37b5494b
+STEP 4  SHA-256  : 7aa342122ab6e677b34e8697b9f29decf15be84aee6c3bb9cd605e3b3777ed85
+STEP 6  Stored   : v2$2cfaa4591dc5b87799bb543b37b5494b$$2y$12$ldGC30zeCUagDjDtwS0oNuEuuiNEc/2RdyftkuHzeuWOgnMyAKt4y
+
+Final hashes identical? NO (the salt changed the result)
+Login check with the correct password : YES
+Login check with a wrong password     : NO</pre>
+  <p><b>Database check.</b> After the salt and pepper columns were added, every user (six accounts across all four roles) was given a salt, the pepper, the salt and pepper concatenation, and a stored hash. Each user's salt is different; the pepper column is the same for all users.</p>
+  <p><b>Two-factor authentication.</b> The audit log shows the two-step login: the password was verified first, then the code.</p>
+<pre>login_success      Password + 2FA verified
+password_verified  Awaiting 2FA</pre>
+  <p><b>Automatic encrypted backup with off-site copy:</b></p>
+<pre>Backup OK: staffhub_20261009_181600.sql.enc
+Cloud copy OK: staffhub_20261009_181600.sql.enc uploaded</pre>
+  <p><b>Access control.</b> Opening a restricted page with the wrong role returns HTTP 403 and writes an <code>access_denied</code> entry to the audit log.</p>
+</section>
+
+</div></main>
+
+<footer>Samuel Dzenenya · Computer Security (PBIT 309 / PBSE 309) · No passwords, keys or configuration are published on this page.</footer>
+</body>
+</html>
